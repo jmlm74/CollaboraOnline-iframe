@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>Ifame-Code</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+	</head>
+<body>
+
+<style>
+#inlineFrame{
+	width: 90%;
+	height: 700px;	
+}
+</style>
+
+<script>
+console.log("script loaded");
+
+function receiveMessage(event) {
+	// Receive message from Iframe
+	console.log('ReceiveMessage: ' + event.data);
+	var msg = JSON.parse(event.data);
+	if (!msg) {
+		return;
+	}
+	
+	// App_LoadingStatus --> Value = Document_Loaded --> Document Ready --> Can send Posts
+	if (msg.MessageId == 'App_LoadingStatus') {
+		if (msg.Values) {
+			if (msg.Values.Status == 'Document_Loaded') {
+				console.log('Tell the wopi client that we are ready to receive messages');
+				var iframe = document.getElementById('inlineFrame');
+				iframe = iframe.contentWindow || (iframe.contentDocument.document || iframe.contentDocument);			
+				// Send the Host_PostMessageReady  before other posts (Mandatory)
+				iframe.postMessage(JSON.stringify({ 'MessageId': 'Host_PostmessageReady' }), '*');
+			}
+		}
+	}
+}
+
+// Just post a message
+function post(msg) {
+	console.log("Post message : " + JSON.stringify(msg));
+	var iframe = document.getElementById('inlineFrame');
+	iframe = iframe.contentWindow || (iframe.contentDocument.document || iframe.contentDocument);			
+	iframe.postMessage(JSON.stringify(msg), '*');
+
+}
+
+// Save button
+function save() {
+	console.log('Post to Save the document....');
+	post({
+		"MessageId" : "Action_Save",
+		"Values" : {
+			"DontTerminateEdit" : true,
+			"DontSaveIfUnmodified": false,
+			"Notify" : true
+		}
+	});
+}
+
+//  THE wopi message listener --> Messages are from COOL
+window.addEventListener("message", receiveMessage, false);
+
+// Close the document (not the iframe)
+function fclose() {
+	console.log("close");
+	post({'MessageId': 'Action_Close',
+	'Values': null
+	});
+}
+</script>
+
+		<h3>IFrame</h3>
+		
+
+		<div class="row mt-5 ">
+			<form id="Save" class="col-3 mx-auto">
+				<button onclick="save(); return false;">Save</button>
+			</form>
+			<form id="fclose" class="col-3 mx-auto">
+				<button onclick="fclose(); return false;">Close</button>
+			</form>
+		</div>
+		
+		<div class="row col-12 mt-5">
+			<!-- THE Iframe ==> Change the src  -->
+			<iframe id="inlineFrame" class="d-flex mx-auto border border-primary" title="Inline Frame"
+				src="https://192.168.5.222/browser/e8ac597/cool.html?WOPISrc=http%3A%2F%2Flocalhost%3A8880%2Fwopi%2Ffiles%2F1575516&access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyaWQiOiJzaGFtZWZ1bFBvdWx0cnk2IiwiZmlsZW5hbWUiOiJ0ZXN0Lm9kdCIsImZ1bGxfZmlsZW5hbWUiOiIvaG9tZS9qbWxtL3dvcGkvZGF0YS90ZXN0Lm9kdCIsInZpZXdtb2RlIjoiUkVBRF9XUklURSIsInRva2VuX2V4cGlyYXRpb24iOjE2NDgyODQ1MjYsImlub2RlIjoiMTU3NTUxNiIsInNpemUiOiI4MTI5IiwicmFuZG9tIjo0NzYsIlVzZXJGcmllbmRseU5hbWUiOiJzaGFtZWZ1bFBvdWx0cnk2In0.yDe-OJYAkdc_HOx8Raw6bIPT2X9TIl-b73a7_bjDV60">
+			</iframe>
+
+		</div>
+
+	</body>
+</html>
+
+
